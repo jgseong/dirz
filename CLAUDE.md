@@ -62,6 +62,7 @@ Errors return `{"error":"<message>"}` with appropriate HTTP status (403 forbidde
 **Concurrency:** one detached `std.Thread` per connection, no pool.
 
 **Zig 0.15.2 API:**
+- `std.heap.DebugAllocator(.{})` — renamed from `GeneralPurposeAllocator` in Zig 0.14.0
 - `std.array_list.Managed(T).init(allocator)` — not `std.ArrayList(T).init`
 - `std.json.Stringify.valueAlloc(allocator, value, .{})` — not `std.json.stringify`
 - `stream.writeAll(buf)` — `stream.writer()` unavailable
