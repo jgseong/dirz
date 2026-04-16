@@ -24,9 +24,9 @@
     .dir-icon { color: #d69e2e; }
     .file-icon { color: #718096; }
     .entry-name { font-family: monospace; }
-    .entry-name.is-dir { color: #2b6cb0; cursor: pointer; font-weight: 500; }
+    .entry-name.is-dir { color: #2b6cb0; cursor: pointer; font-weight: 500; text-decoration: none; }
     .entry-name.is-dir:hover { text-decoration: underline; }
-    .entry-name.is-file { cursor: pointer; }
+    .entry-name.is-file { color: inherit; cursor: pointer; text-decoration: none; }
     .entry-name.is-file:hover { text-decoration: underline; color: #2b6cb0; }
     .breadcrumb { background: #fff; border: 1px solid #e2e8f0; padding: 0.3rem 0.75rem; margin: 0; font-family: monospace; font-size: 0.8rem; }
     .breadcrumb-item a { color: #2b6cb0; text-decoration: none; }
@@ -40,9 +40,16 @@
     .table-wrapper { background: #fff; border: 1px solid #e2e8f0; }
     .spinner-border { width: 1.2rem; height: 1.2rem; }
     .error-msg { font-family: monospace; font-size: 0.85rem; }
-    .badge-dir { background: #ebf8ff; color: #2c5282; border: 1px solid #bee3f8; font-weight: 400; font-size: 0.7rem; }
     .path-pill { background: #2d3748; color: #a0aec0; font-family: monospace; font-size: 0.75rem; padding: 0.15rem 0.5rem; border: 1px solid #4a5568; }
     .back-btn { font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+    /* Viewer */
+    .viewer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .viewer-box { background: #1e1e1e; color: #d4d4d4; width: 90vw; max-width: 900px; height: 80vh; display: flex; flex-direction: column; border: 1px solid #4a5568; }
+    .viewer-header { background: #2d3748; color: #e2e8f0; padding: 0.4rem 0.75rem; font-family: monospace; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .viewer-close { background: none; border: none; color: #a0aec0; font-size: 1rem; cursor: pointer; padding: 0 0.25rem; line-height: 1; }
+    .viewer-close:hover { color: #fff; }
+    .viewer-content { margin: 0; padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem; overflow: auto; flex: 1; white-space: pre; tab-size: 4; }
+    .viewer-loading { display: flex; align-items: center; justify-content: center; flex: 1; color: #718096; font-family: monospace; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -145,10 +152,20 @@
               <td>
                 <span v-if="entry.type==='dir'" class="dir-icon me-1">&#128193;</span>
                 <span v-else class="file-icon me-1">&#128196;</span>
-                <span
-                  :class="['entry-name', entry.type==='dir' ? 'is-dir' : 'is-file']"
-                  @click="navigate(entry)"
-                >{{ entry.name }}</span>
+                <!-- Directory: plain link for right-click, click navigates -->
+                <a
+                  v-if="entry.type==='dir'"
+                  :href="dirUrl(entry.name)"
+                  class="entry-name is-dir"
+                  @click.prevent="navigate(entry)"
+                >{{ entry.name }}</a>
+                <!-- File: href for right-click copy link; click opens viewer or download -->
+                <a
+                  v-else
+                  :href="fileUrl(entry.name)"
+                  class="entry-name is-file"
+                  @click.prevent="navigate(entry)"
+                >{{ entry.name }}</a>
               </td>
               <td class="size-cell">
                 <span v-if="entry.type==='dir'" class="text-muted">—</span>
@@ -175,10 +192,35 @@
         <span v-if="search"> &mdash; filtered by "{{ search }}"</span>
       </div>
     </div>
+
+    <!-- Text Viewer -->
+    <div v-if="viewer.show" class="viewer-overlay" @click.self="closeViewer" @keydown.esc="closeViewer">
+      <div class="viewer-box">
+        <div class="viewer-header">
+          <span>{{ viewer.name }}</span>
+          <button class="viewer-close" @click="closeViewer">✕</button>
+        </div>
+        <div v-if="viewer.loading" class="viewer-loading">Loading...</div>
+        <pre v-else class="viewer-content">{{ viewer.content }}</pre>
+      </div>
+    </div>
   </div>
 
   <script type="module">
-    import { createApp, ref, computed, onMounted } from 'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js';
+    import { createApp, ref, computed, onMounted, onUnmounted } from 'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js';
+
+    const TEXT_EXTS = new Set([
+      'txt','md','log','json','yaml','yml','toml','ini','conf','cfg',
+      'sh','bash','zsh','fish','py','js','ts','jsx','tsx','vue','go',
+      'zig','c','cpp','h','hpp','rs','java','rb','pl','lua','sql',
+      'html','htm','xml','svg','css','scss','less','diff','patch',
+      'makefile','dockerfile','gitignore','env','csv',
+    ]);
+
+    function isTextFile(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return TEXT_EXTS.has(ext) || name.toLowerCase() === 'makefile' || name.toLowerCase() === 'dockerfile';
+    }
 
     const app = createApp({
       setup() {
@@ -189,8 +231,9 @@
         const sortDir = ref('asc');
         const loading = ref(false);
         const error = ref('');
+        const viewer = ref({ show: false, name: '', content: '', loading: false });
 
-        async function loadPath(path) {
+        async function loadPath(path, pushState = true) {
           loading.value = true;
           error.value = '';
           try {
@@ -202,6 +245,10 @@
             const data = await res.json();
             currentPath.value = data.path;
             entries.value = data.entries || [];
+            if (pushState) {
+              const url = data.path === '/' ? '/' : `/?path=${encodeURIComponent(data.path)}`;
+              history.pushState({ path: data.path }, '', url);
+            }
           } catch (e) {
             error.value = `Error: ${e.message}`;
           } finally {
@@ -209,10 +256,53 @@
           }
         }
 
+        function onPopState(e) {
+          const path = e.state?.path || new URLSearchParams(location.search).get('path') || '/';
+          loadPath(path, false);
+        }
+
         function goUp() {
           const parts = currentPath.value.replace(/\/$/, '').split('/').filter(Boolean);
           parts.pop();
           loadPath('/' + parts.join('/') || '/');
+        }
+
+        async function openViewer(name) {
+          viewer.value = { show: true, name, content: '', loading: true };
+          try {
+            const res = await fetch(fileUrl(name));
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            viewer.value.content = await res.text();
+          } catch (e) {
+            viewer.value.content = `Error loading file: ${e.message}`;
+          } finally {
+            viewer.value.loading = false;
+          }
+        }
+
+        function closeViewer() {
+          viewer.value.show = false;
+        }
+
+        function navigate(entry) {
+          if (entry.type === 'dir') {
+            const base = currentPath.value.replace(/\/$/, '');
+            loadPath(base + '/' + entry.name);
+          } else if (isTextFile(entry.name)) {
+            openViewer(entry.name);
+          } else {
+            window.open(fileUrl(entry.name), '_blank');
+          }
+        }
+
+        function fileUrl(name) {
+          const base = currentPath.value.replace(/\/$/, '');
+          return `/files${base}/${encodeURIComponent(name)}`;
+        }
+
+        function dirUrl(name) {
+          const base = currentPath.value.replace(/\/$/, '');
+          return `/?path=${encodeURIComponent(base + '/' + name)}`;
         }
 
         const filteredEntries = computed(() => {
@@ -238,20 +328,6 @@
             sortKey.value = key;
             sortDir.value = 'asc';
           }
-        }
-
-        function navigate(entry) {
-          if (entry.type === 'dir') {
-            const base = currentPath.value.replace(/\/$/, '');
-            loadPath(base + '/' + entry.name);
-          } else {
-            window.open(fileUrl(entry.name), '_blank');
-          }
-        }
-
-        function fileUrl(name) {
-          const base = currentPath.value.replace(/\/$/, '');
-          return `/files${base}/${encodeURIComponent(name)}`;
         }
 
         const breadcrumbs = computed(() => {
@@ -285,12 +361,22 @@
           return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
 
-        onMounted(() => loadPath('/'));
+        onMounted(() => {
+          window.addEventListener('popstate', onPopState);
+          const initPath = new URLSearchParams(location.search).get('path') || '/';
+          loadPath(initPath, false);
+          history.replaceState({ path: initPath }, '', location.href);
+        });
+
+        onUnmounted(() => {
+          window.removeEventListener('popstate', onPopState);
+        });
 
         return {
-          currentPath, entries, search, sortKey, sortDir, loading, error,
+          currentPath, entries, search, sortKey, sortDir, loading, error, viewer,
           filteredEntries, breadcrumbs, dirCount, fileCount, totalSizeHuman,
-          loadPath, goUp, toggleSort, navigate, fileUrl, formatSize, formatDate,
+          loadPath, goUp, toggleSort, navigate, fileUrl, dirUrl,
+          openViewer, closeViewer, formatSize, formatDate,
         };
       }
     });
