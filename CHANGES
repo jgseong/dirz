@@ -1,0 +1,10 @@
+## 0.1.0 (2026-04-17)
+
+Initial release.
+
+- Zig 0.15.2 HTTP server with zero runtime dependencies
+- Vue 3 Composition API frontend embedded in binary via @embedFile
+- Directory listing with sort (name, size, modified) and live filter
+- File download support
+- Path traversal protection via realpathAlloc + prefix check
+- Configurable --root, --port, --host flags
