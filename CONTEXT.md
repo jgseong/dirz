@@ -1,14 +1,9 @@
-# Context.md — dirz Working Context
+# CONTEXT.md — dirz Working Context
 
 ## Current State
-- Implementation complete, build succeeds, basic tests pass
+- Implementation complete, build succeeds
+- Published on GitHub: https://github.com/jgseong/dirz
 - Binary: `./zig-out/bin/dirz`
-
-## Running
-```bash
-zig build
-./zig-out/bin/dirz --root /your/path --port 8080
-```
 
 ## Directory Structure
 ```
@@ -19,33 +14,36 @@ dirz/
 │   └── index.html     # Vue 3 SPA (embedded in binary via @embedFile)
 ├── public/
 │   └── index.html     # Development reference (same as src/index.html)
-├── Claude.md          # Project requirements
-├── Skills.md          # Implementation pattern reference
-└── Context.md         # This file
+├── CLAUDE.md          # Claude Code guidance (build, architecture, API, conventions)
+├── CONTEXT.md         # This file
+├── SKILLS.md          # Implementation pattern reference
+├── README.md
+├── LICENSE
+├── CHANGES
+└── VERSION            # 0.1.0
 ```
 
-## API
-- `GET /` → Vue 3 SPA
-- `GET /api/ls?path=<url-encoded-path>` → JSON directory listing
-- `GET /files/<path>` → File download
-
-## Zig 0.15.2 Key API Changes (already applied)
+## Zig API Compatibility Notes
 | Old API | New API |
 |---|---|
+| `std.heap.GeneralPurposeAllocator` | `std.heap.DebugAllocator` (renamed in Zig 0.14.0) |
 | `std.ArrayList(T).init(alloc)` | `std.array_list.Managed(T).init(alloc)` |
 | `std.json.stringify(v, .{}, writer)` | `std.json.Stringify.valueAlloc(alloc, v, .{})` |
-| `stream.writer()` | Use `stream.writeAll(buf)` directly |
+| `stream.writer()` | `stream.writeAll(buf)` directly |
 | `build.zig` `.root_source_file = b.path(...)` | `.root_module = b.createModule(.{ .root_source_file = ... })` |
-| `@embedFile("../public/...")` | Cannot reference outside package path → place files inside `src/` |
+| `@embedFile("../public/...")` | Cannot reference outside package root → files must be inside `src/` |
 
 ## Known Issues / TODO
-- [ ] `/api/ls` response may be slow on directories with many files (no pagination)
+- [ ] `/api/ls` may be slow on directories with many files (no pagination)
 - [ ] HTTPS not supported
-- [ ] Changes to `index.html` while binary is running are not reflected (embedded at build time, requires rebuild)
-- [ ] Windows/Mac path separator handling not implemented (WSL only)
+- [ ] Windows/Mac path separator handling not implemented (Linux/WSL only)
 
-## Recent Change History
+## Change History
 1. Initial implementation (Zig HTTP server, Vue 3 SPA)
-2. Zig 0.15.2 API compatibility fixes (ArrayList, json, stream, embedFile)
-3. Memory leak fix: allocate `config.root` with `config_arena` instead of GPA
-4. `--root` with invalid path caused FileNotFound crash → clear error message + `exit(1)`
+2. Zig API compatibility fixes (ArrayList, json, stream, embedFile)
+3. Memory leak fix: `config.root` allocated with `config_arena` instead of GPA
+4. `--root` with invalid path: clear error message + `exit(1)` instead of crash
+5. Renamed project `dirix` → `dirz`
+6. Added README, LICENSE, CHANGES, VERSION, .gitignore
+7. Added CLAUDE.md, CONTEXT.md, SKILLS.md; removed Claude.md
+8. Fix: `DebugAllocator` replaces `GeneralPurposeAllocator` (Zig 0.14.0+)
