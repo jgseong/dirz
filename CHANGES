@@ -1,7 +1,7 @@
 ## Unreleased
 
-- Auto-copy `src/index.html` → `public/index.html` on `zig build`
-- Add `zig build clean` step (removes zig-out and .zig-cache)
+- Auto-copy `src/index.html` → `public/index.html` on `zig build` (create `public/` if missing)
+- Add `zig build clean` step (removes zig-out, .zig-cache, and public)
 
 ## 0.1.1 (2026-04-17)
 

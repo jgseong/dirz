@@ -42,7 +42,7 @@ Single Zig binary, no Node/npm/reverse proxy.
 
 - `src/main.zig` — entire backend: HTTP parsing, routing, fs, file serving
 - `src/index.html` — entire frontend, embedded into binary at compile time; changes require rebuild
-- `public/index.html` — auto-copied from `src/index.html` on every `zig build`; open directly in browser for UI dev without rebuilding
+- `public/index.html` — auto-copied from `src/index.html` on every `zig build` (`public/` created if missing); open directly in browser for UI dev without rebuilding; removed by `zig build clean`
 
 ## API
 
