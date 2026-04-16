@@ -23,11 +23,13 @@ dirz/
 └── VERSION            # 0.1.0
 ```
 
-## Zig API Compatibility Notes
-| Old API | New API |
+## Zig Version
+
+**Requires Zig 0.15.2.** Zig 0.16.0+ breaks the build — networking (`std.net`) was replaced by `std.Io` system.
+
+## Zig 0.15.2 API Notes
+| Old (pre-0.15) | Current (0.15.2) |
 |---|---|
-| `std.heap.GeneralPurposeAllocator` | `std.heap.DebugAllocator` (renamed in Zig 0.14.0) |
-| `std.process.argsAlloc` / `argsFree` | `std.process.ArgIterator.initWithAllocator` (removed in Zig 0.14.0) |
 | `std.ArrayList(T).init(alloc)` | `std.array_list.Managed(T).init(alloc)` |
 | `std.json.stringify(v, .{}, writer)` | `std.json.Stringify.valueAlloc(alloc, v, .{})` |
 | `stream.writer()` | `stream.writeAll(buf)` directly |
@@ -35,6 +37,7 @@ dirz/
 | `@embedFile("../public/...")` | Cannot reference outside package root → files must be inside `src/` |
 
 ## Known Issues / TODO
+- [ ] Zig 0.16.0+ support — `std.net` replaced by `std.Io` networking system
 - [ ] `/api/ls` may be slow on directories with many files (no pagination)
 - [ ] HTTPS not supported
 - [ ] Windows/Mac path separator handling not implemented (Linux/WSL only)
@@ -47,5 +50,5 @@ dirz/
 5. Renamed project `dirix` → `dirz`
 6. Added README, LICENSE, CHANGES, VERSION, .gitignore
 7. Added CLAUDE.md, CONTEXT.md, SKILLS.md; removed Claude.md
-8. Fix: `DebugAllocator` replaces `GeneralPurposeAllocator` (Zig 0.14.0+)
-9. Fix: `ArgIterator.initWithAllocator` replaces `argsAlloc`/`argsFree` (Zig 0.14.0+)
+8. Reverted Zig 0.14.x compatibility patches — targeting Zig 0.15.2 only
+9. Added TODO for Zig 0.16.0+ migration (`std.Io` networking)

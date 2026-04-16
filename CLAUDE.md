@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Zig Version
+
+**Required: Zig 0.15.2 exactly.** Zig 0.16.0+ is not supported — the networking API (`std.net`) was replaced by `std.Io` in 0.16.0 and requires a major rewrite.
+
+TODO: migrate to Zig 0.16.0+ `std.Io` networking system.
+
 ## Build & Run
 
 ```bash
@@ -62,7 +68,7 @@ Errors return `{"error":"<message>"}` with appropriate HTTP status (403 forbidde
 **Concurrency:** one detached `std.Thread` per connection, no pool.
 
 **Zig 0.15.2 API:**
-- `std.heap.DebugAllocator(.{})` — renamed from `GeneralPurposeAllocator` in Zig 0.14.0
+- `std.heap.GeneralPurposeAllocator(.{})` — renamed to `DebugAllocator` in 0.14.0, reverted back in 0.15.x
 - `std.array_list.Managed(T).init(allocator)` — not `std.ArrayList(T).init`
 - `std.json.Stringify.valueAlloc(allocator, value, .{})` — not `std.json.stringify`
 - `stream.writeAll(buf)` — `stream.writer()` unavailable

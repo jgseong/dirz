@@ -12,7 +12,13 @@ A lightweight self-hosted directory browser. Single Zig binary, no Node/npm requ
 
 ## Requirements
 
-- [Zig 0.15.x](https://ziglang.org/download/)
+- [Zig 0.15.2](https://ziglang.org/download/0.15.2/) (exactly — see note below)
+
+> **Note:** Zig 0.16.0+ is not yet supported. The networking API (`std.net`) was overhauled in 0.16.0 and requires a significant rewrite. See [TODO](#todo).
+
+## TODO
+
+- [ ] Zig 0.16.0+ support — networking migrated to `std.Io` system
 
 ## Build
 
