@@ -4,8 +4,11 @@ A lightweight self-hosted directory browser. Single Zig binary, no Node/npm requ
 
 ## Features
 
-- Browseable directory listing with sort by name, size, or modified date
+- Directory listing with sort by name, size, or modified date
 - Live name filter
+- Browser back/forward navigation (URL reflects current path)
+- Right-click on filename to copy link
+- Text file inline viewer (txt, md, json, py, zig, sh, yaml, and more)
 - File download
 - Vue 3 frontend embedded in the binary — no separate static file serving needed
 - Path traversal protection

@@ -52,3 +52,6 @@ dirz/
 7. Added CLAUDE.md, CONTEXT.md, SKILLS.md; removed Claude.md
 8. Reverted Zig 0.14.x compatibility patches — targeting Zig 0.15.2 only
 9. Added TODO for Zig 0.16.0+ migration (`std.Io` networking)
+10. Browser back/forward navigation via `history.pushState` + `popstate`
+11. File/dir names as `<a href>` — right-click copy link supported natively
+12. Text file inline viewer modal (30+ extensions: txt, md, json, py, zig, ...)
