@@ -1,3 +1,10 @@
+## 0.1.1 (2026-04-17)
+
+- Browser back/forward navigation via History API (URL reflects current path)
+- Right-click on filename to copy link (native browser context menu)
+- Text file inline viewer for 30+ extensions (txt, md, json, py, zig, sh, yaml, ...)
+- Add .claude/ to .gitignore
+
 ## 0.1.0 (2026-04-17)
 
 Initial release.
