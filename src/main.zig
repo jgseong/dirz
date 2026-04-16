@@ -23,8 +23,9 @@ pub fn main() !void {
     defer config_arena.deinit();
     const ca = config_arena.allocator();
 
-    const args = try std.process.argsAlloc(alloc);
-    defer std.process.argsFree(alloc, args);
+    var args_iter = try std.process.ArgIterator.initWithAllocator(ca);
+    defer args_iter.deinit();
+    _ = args_iter.next(); // skip executable name
 
     var config = Config{
         .root = try std.fs.realpathAlloc(ca, "."),
@@ -32,23 +33,21 @@ pub fn main() !void {
         .host = "0.0.0.0",
     };
 
-    var i: usize = 1;
-    while (i < args.len) : (i += 1) {
-        if (std.mem.eql(u8, args[i], "--root") and i + 1 < args.len) {
-            i += 1;
-            config.root = std.fs.realpathAlloc(ca, args[i]) catch |err| {
-                std.debug.print("error: --root path not found: {s} ({s})\n", .{ args[i], @errorName(err) });
+    while (args_iter.next()) |arg| {
+        if (std.mem.eql(u8, arg, "--root")) {
+            const val = args_iter.next() orelse continue;
+            config.root = std.fs.realpathAlloc(ca, val) catch |err| {
+                std.debug.print("error: --root path not found: {s} ({s})\n", .{ val, @errorName(err) });
                 std.process.exit(1);
             };
-        } else if (std.mem.eql(u8, args[i], "--port") and i + 1 < args.len) {
-            i += 1;
-            config.port = std.fmt.parseInt(u16, args[i], 10) catch {
-                std.debug.print("error: invalid --port value: {s}\n", .{args[i]});
+        } else if (std.mem.eql(u8, arg, "--port")) {
+            const val = args_iter.next() orelse continue;
+            config.port = std.fmt.parseInt(u16, val, 10) catch {
+                std.debug.print("error: invalid --port value: {s}\n", .{val});
                 std.process.exit(1);
             };
-        } else if (std.mem.eql(u8, args[i], "--host") and i + 1 < args.len) {
-            i += 1;
-            config.host = args[i];
+        } else if (std.mem.eql(u8, arg, "--host")) {
+            config.host = try ca.dupe(u8, args_iter.next() orelse continue);
         }
     }
 
