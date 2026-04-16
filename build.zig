@@ -12,6 +12,8 @@ pub fn build(b: *std.Build) void {
         }),
     });
     b.installArtifact(exe);
+    const copy_html = b.addSystemCommand(&.{ "cp", "src/index.html", "public/index.html" });
+    b.getInstallStep().dependOn(&copy_html.step);
     const run = b.addRunArtifact(exe);
     if (b.args) |args| run.addArgs(args);
     const run_step = b.step("run", "Run dirz");

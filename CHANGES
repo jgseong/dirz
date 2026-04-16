@@ -1,3 +1,8 @@
+## Unreleased
+
+- Auto-copy `src/index.html` → `public/index.html` on `zig build`
+- Add `zig build clean` step (removes zig-out and .zig-cache)
+
 ## 0.1.1 (2026-04-17)
 
 - Browser back/forward navigation via History API (URL reflects current path)
