@@ -53,6 +53,10 @@ Then open `http://localhost:8080` in a browser.
 | `GET /api/ls?path=<path>` | JSON directory listing |
 | `GET /files/<path>` | File download |
 
+## Development
+
+Developed with [Claude Code](https://claude.ai/code).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
