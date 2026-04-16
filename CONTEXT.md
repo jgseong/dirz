@@ -27,6 +27,7 @@ dirz/
 | Old API | New API |
 |---|---|
 | `std.heap.GeneralPurposeAllocator` | `std.heap.DebugAllocator` (renamed in Zig 0.14.0) |
+| `std.process.argsAlloc` / `argsFree` | `std.process.ArgIterator.initWithAllocator` (removed in Zig 0.14.0) |
 | `std.ArrayList(T).init(alloc)` | `std.array_list.Managed(T).init(alloc)` |
 | `std.json.stringify(v, .{}, writer)` | `std.json.Stringify.valueAlloc(alloc, v, .{})` |
 | `stream.writer()` | `stream.writeAll(buf)` directly |
@@ -47,3 +48,4 @@ dirz/
 6. Added README, LICENSE, CHANGES, VERSION, .gitignore
 7. Added CLAUDE.md, CONTEXT.md, SKILLS.md; removed Claude.md
 8. Fix: `DebugAllocator` replaces `GeneralPurposeAllocator` (Zig 0.14.0+)
+9. Fix: `ArgIterator.initWithAllocator` replaces `argsAlloc`/`argsFree` (Zig 0.14.0+)
